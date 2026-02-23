@@ -1,52 +1,88 @@
 #!/usr/bin/python3
-""" 3-count.py """
+"""Reddit recursive keyword counting module."""
+from collections import Counter
+import re
+
 import requests
 
 
-def count_words(subreddit, word_list, after="", count=[]):
-    """ prints a sorted count of given keywords """
+USER_AGENT = {
+    "User-Agent": (
+        "python:alu-scripting.api_advanced:1.0 "
+        "(by /u/reddit_api_bot)"
+    )
+}
+WORD_RE = re.compile(r"[A-Za-z0-9]+")
 
-    if after == "":
-        count = [0] * len(word_list)
+
+def _fetch_titles(subreddit, titles=None, after=None):
+    """Recursively fetch all hot post titles for a subreddit."""
+    if titles is None:
+        titles = []
 
     url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    request = requests.get(url,
-                           params={'after': after},
-                           allow_redirects=False,
-                           headers={'User-Agent': 'Mozilla/5.0'})
+    params = {"limit": 100}
+    if after is not None:
+        params["after"] = after
 
-    if request.status_code == 200:
-        data = request.json()
+    response = requests.get(
+        url,
+        headers=USER_AGENT,
+        params=params,
+        allow_redirects=False,
+        timeout=10,
+    )
 
-        for topic in (data['data']['children']):
-            for word in topic['data']['title'].split():
-                for i in range(len(word_list)):
-                    if word_list[i].lower() == word.lower():
-                        count[i] += 1
+    if response.status_code != 200:
+        return None
 
-        after = data['data']['after']
-        if after is None:
-            save = []
-            for i in range(len(word_list)):
-                for j in range(i + 1, len(word_list)):
-                    if word_list[i].lower() == word_list[j].lower():
-                        save.append(j)
-                        count[i] += count[j]
+    data = response.json().get("data", {})
+    posts = data.get("children", [])
+    titles.extend(post.get("data", {}).get("title", "") for post in posts)
 
-            for i in range(len(word_list)):
-                for j in range(i, len(word_list)):
-                    if (count[j] > count[i] or
-                            (word_list[i] > word_list[j] and
-                             count[j] == count[i])):
-                        aux = count[i]
-                        count[i] = count[j]
-                        count[j] = aux
-                        aux = word_list[i]
-                        word_list[i] = word_list[j]
-                        word_list[j] = aux
+    next_after = data.get("after")
+    if next_after is None:
+        return titles
 
-            for i in range(len(word_list)):
-                if (count[i] > 0) and i not in save:
-                    print("{}: {}".format(word_list[i].lower(), count[i]))
-        else:
-            count_words(subreddit, word_list, after, count)
+    return _fetch_titles(subreddit, titles, next_after)
+
+
+def _count_words_in_titles(titles, counts, multipliers, idx=0):
+    """Recursively count matching keywords across all titles."""
+    if idx >= len(titles):
+        return
+
+    words = WORD_RE.findall(titles[idx].lower())
+    for word in words:
+        if word in counts:
+            counts[word] += multipliers[word]
+
+    _count_words_in_titles(titles, counts, multipliers, idx + 1)
+
+
+def count_words(subreddit, word_list):
+    """Print sorted keyword counts for hot posts in a subreddit."""
+    if not word_list:
+        return
+
+    lowered = [word.lower() for word in word_list]
+    multipliers = Counter(lowered)
+    counts = {word: 0 for word in multipliers}
+
+    try:
+        titles = _fetch_titles(subreddit)
+    except requests.RequestException:
+        return
+
+    if titles is None:
+        return
+
+    _count_words_in_titles(titles, counts, multipliers)
+
+    sorted_counts = sorted(
+        counts.items(),
+        key=lambda item: (-item[1], item[0]),
+    )
+    for word, count in sorted_counts:
+        if count > 0:
+            print("{}: {}".format(word, count))

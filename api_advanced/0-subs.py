@@ -1,21 +1,31 @@
 #!/usr/bin/python3
-"""
-function that queries the 'Reddit API' and returns the number of subscribers
-"""
+"""Reddit subscriber module."""
 import requests
 
 
+USER_AGENT = {
+    "User-Agent": (
+        "python:alu-scripting.api_advanced:1.0 "
+        "(by /u/reddit_api_bot)"
+    )
+}
+
+
 def number_of_subscribers(subreddit):
-    """
-    number of subscribers
-    """
-    url = "https://oauth.reddit.com/r/{}/about.json".format(subreddit)
-    headers = {"User-Agent": "Mozilla/5.0"}  # avoid Too Many Requests error
+    """Return subscriber count for a subreddit, or 0 if invalid."""
+    url = "https://www.reddit.com/r/{}/about.json".format(subreddit)
 
-    response = requests.get(url, headers=headers, allow_redirects=False)
-
-    if response.status_code == 200:
-        data = response.json()
-        return data['data']['subscribers']
-    else:
+    try:
+        response = requests.get(
+            url,
+            headers=USER_AGENT,
+            allow_redirects=False,
+            timeout=10,
+        )
+    except requests.RequestException:
         return 0
+
+    if response.status_code != 200:
+        return 0
+
+    return response.json().get("data", {}).get("subscribers", 0)

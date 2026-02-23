@@ -1,24 +1,49 @@
 #!/usr/bin/python3
-""" 2-recurse.py """
+"""Reddit recursive listing module."""
 import requests
 
 
-def recurse(subreddit, hot_list=[], after=None):
-    """ returns list with titles of all hot articles in a subreddit """
-    url = 'https://www.reddit.com/r/{}/hot.json'.format(subreddit)
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    params = {"after": after}
-    response = requests.get(
-                            url,
-                            headers=headers,
-                            params=params,
-                            allow_redirects=False)
-    if response.status_code == 200:
-        data = response.json()["data"]
-        hot_list += [post["data"]["title"] for post in data["children"]]
-        if data["after"] is None:
-            return hot_list
-        else:
-            return recurse(subreddit, hot_list, data["after"])
-    elif response.status_code == 404:
+USER_AGENT = {
+    "User-Agent": (
+        "python:alu-scripting.api_advanced:1.0 "
+        "(by /u/reddit_api_bot)"
+    )
+}
+
+
+def recurse(subreddit, hot_list=None, after=None):
+    """Return titles of all hot posts, or None for an invalid subreddit."""
+    if hot_list is None:
+        hot_list = []
+
+    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
+    params = {"limit": 100}
+    if after is not None:
+        params["after"] = after
+
+    try:
+        response = requests.get(
+            url,
+            headers=USER_AGENT,
+            params=params,
+            allow_redirects=False,
+            timeout=10,
+        )
+    except requests.RequestException:
         return None
+
+    if response.status_code != 200:
+        return None
+
+    data = response.json().get("data", {})
+    posts = data.get("children", [])
+    hot_list.extend(
+        post.get("data", {}).get("title", "")
+        for post in posts
+    )
+
+    next_after = data.get("after")
+    if next_after is None:
+        return hot_list
+
+    return recurse(subreddit, hot_list, next_after)
