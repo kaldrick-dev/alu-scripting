@@ -4,10 +4,7 @@ import requests
 
 
 USER_AGENT = {
-    "User-Agent": (
-        "python:alu-scripting.api_advanced:1.0 "
-        "(by /u/reddit_api_bot)"
-    )
+    "User-Agent": "alu-api-advanced/1.0"
 }
 
 
@@ -16,17 +13,12 @@ def top_ten(subreddit):
     url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
     params = {"limit": 10}
 
-    try:
-        response = requests.get(
-            url,
-            headers=USER_AGENT,
-            params=params,
-            allow_redirects=False,
-            timeout=10,
-        )
-    except requests.RequestException:
-        print(None)
-        return
+    response = requests.get(
+        url,
+        headers=USER_AGENT,
+        params=params,
+        allow_redirects=False,
+    )
 
     if response.status_code != 200:
         print(None)
