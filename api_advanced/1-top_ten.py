@@ -1,5 +1,9 @@
 #!/usr/bin/python3
-"""Query Reddit API and print top 10 hot post titles for a subreddit."""
+"""Reddit hot posts module.
+
+This module exposes `top_ten`, which queries the Reddit API and prints the
+first 10 hot post titles for a subreddit.
+"""
 import requests
 
 

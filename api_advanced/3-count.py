@@ -1,5 +1,9 @@
 #!/usr/bin/python3
-"""Recursively count keyword occurrences in subreddit hot post titles."""
+"""Reddit recursive word counting module.
+
+This module exposes `count_words`, which recursively fetches hot posts for a
+subreddit and prints sorted keyword occurrence counts.
+"""
 import re
 import requests
 from collections import Counter

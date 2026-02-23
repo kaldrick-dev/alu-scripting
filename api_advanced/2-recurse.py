@@ -1,5 +1,9 @@
 #!/usr/bin/python3
-"""Recursively query Reddit API and return all hot post titles."""
+"""Reddit recursive listing module.
+
+This module exposes `recurse`, which recursively retrieves all hot post
+titles from a subreddit using Reddit API pagination.
+"""
 import requests
 
 
