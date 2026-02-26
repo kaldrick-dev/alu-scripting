@@ -1,3 +1,6 @@
+#usr/bin/python3
+"""Reddit API module."""
+
 import requests
 
 def top_ten(subreddit):
