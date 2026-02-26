@@ -5,19 +5,13 @@ import requests
 
 
 def top_ten(subreddit):
-    """Print the titles of up to 10 hot posts for a subreddit."""
-    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    headers = {"User-Agent": "python:top_ten:v1.0 (by /u/reddit_api_script)"}
+    """Print the titles of up to 10 posts for a subreddit."""
+    url = "https://www.reddit.com/r/{}.json?limit=10".format(subreddit)
+    headers = {"User-Agent": "MyAPI/0.0.1"}
 
     try:
-        response = requests.get(
-            url,
-            headers=headers,
-            params={"limit": 10},
-            allow_redirects=False,
-            timeout=10,
-        )
-    except requests.RequestException:
+        response = requests.get(url, headers=headers, allow_redirects=False)
+    except Exception:
         print(None)
         return
 
