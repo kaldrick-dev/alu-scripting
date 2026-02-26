@@ -2,28 +2,33 @@
 """Reddit API module."""
 
 import requests
+from sys import argv
 
 
 def top_ten(subreddit):
-    """Prints the titles of the first 10 hot posts for a subreddit."""
-    url = "https://www.reddit.com/r/{}/hot.json?limit=10".format(subreddit)
-    headers = {"User-Agent": "python:api_advanced:v1.0 (by /u/L-nsamba)"}
+    """
+    Returns the top ten posts for a given subreddit.
+    """
+    user = {'User-Agent': 'Mozilla/5.0'}
+    url = 'https://www.reddit.com/r/{}/hot/.json?limit=10'.format(subreddit)
 
     try:
-        response = requests.get(url, headers=headers, allow_redirects=False)
-    except requests.RequestException:
-        print(None)
-        return
+        response = requests.get(url, headers=user, allow_redirects=False)
+        response.raise_for_status()
+        data = response.json()
 
-    if response.status_code != 200:
-        print(None)
-        return
-
-    try:
-        posts = response.json().get("data", {}).get("children", [])
+        if 'data' in data and 'children' in data['data']:
+            for post in data['data']['children']:
+                print(post['data']['title'])
+        print("OK")
+    except requests.exceptions.RequestException:
+        print("None")
     except ValueError:
-        print(None)
-        return
+        print("None")
 
-    for post in posts:
-        print(post.get("data", {}).get("title", ""))
+
+if __name__ == "__main__":
+    if len(argv) > 1:
+        top_ten(argv[1])
+    else:
+        print("Usage: ./script.py <subreddit>")
