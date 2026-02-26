@@ -1,31 +1,24 @@
 #!/usr/bin/python3
-"""Reddit hot posts module."""
+"""Script that fetch 10 hot post for a given subreddit."""
 import requests
 
 
-USER_AGENT = {
-    "User-Agent": "Mozilla/5.0 (compatible; alu-api-advanced/1.0)"
-}
-
-
 def top_ten(subreddit):
-    """Print the first 10 hot post titles or None if invalid."""
-    url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
-    params = {"limit": 10, "raw_json": 1}
+    """Return number of subscribers if @subreddit is valid subreddit.
+    if not return 0."""
 
-    response = requests.get(
-        url,
-        headers=USER_AGENT,
-        params=params,
-        allow_redirects=False,
-    )
+    headers = {'User-Agent': 'MyAPI/0.0.1'}
+    subreddit_url = "https://reddit.com/r/{}.json".format(subreddit)
+    response = requests.get(subreddit_url, headers=headers)
 
-    if response.status_code != 200:
+    if response.status_code == 200:
+        json_data = response.json()
+        for i in range(10):
+            print(
+                json_data.get('data')
+                .get('children')[i]
+                .get('data')
+                .get('title')
+            )
+    else:
         print(None)
-        return
-
-    posts = response.json().get("data", {}).get("children", [])
-    for post in posts:
-        title = post.get("data", {}).get("title")
-        if title:
-            print(title)
